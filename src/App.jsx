@@ -5,7 +5,8 @@ import {
   Compass, MapPin, BookOpen, Users, MessageSquare, ShieldAlert, Sun, Moon, 
   Bell, Award, CheckCircle, ArrowRight, Upload, Search, Download, Star, 
   Check, ArrowUp, ArrowDown, Trash2, X, Plus, Play, ExternalLink, Calendar,
-  Clock, Shield, AlertTriangle, Cpu, Terminal, RefreshCw, BarChart2
+  Clock, Shield, AlertTriangle, Cpu, Terminal, RefreshCw, BarChart2,
+  Camera, Music, Trophy, Film
 } from 'lucide-react';
 
 import CampusMap from './components/CampusMap';
@@ -433,6 +434,42 @@ export default function App() {
         fetchClubs();
         alert(data.joined ? `Success! Applied to ${clubName}.` : `Left club ${clubName}.`);
       });
+  };
+
+  const handleJoinActivity = (activityTitle) => {
+    if (!user) {
+      alert('Please authenticate to register for session rosters.');
+      return;
+    }
+    
+    // Optimistic UI update
+    const isJoined = user.joined_activities && user.joined_activities.includes(activityTitle);
+    const updatedActivities = isJoined 
+      ? user.joined_activities.filter(a => a !== activityTitle)
+      : [...(user.joined_activities || []), activityTitle];
+      
+    const updatedUser = { ...user, joined_activities: updatedActivities };
+    setUser(updatedUser);
+    localStorage.setItem('cc_user', JSON.stringify(updatedUser));
+    
+    fetch(`${API_BASE}/clubs/activities/register`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify({ activityTitle })
+    })
+      .then(res => res.json())
+      .then(data => {
+        if (data.success) {
+          const syncedUser = { ...user, joined_activities: data.activities };
+          setUser(syncedUser);
+          localStorage.setItem('cc_user', JSON.stringify(syncedUser));
+          fetchClubs(); // Sync slot count dynamically
+        }
+      })
+      .catch(err => console.error('Roster registration failure:', err));
   };
 
   // --- QUIZ ACTIONS ---
@@ -1048,55 +1085,181 @@ export default function App() {
 
             {/* 5. CLUBS VIEW */}
             {activeView === 'clubs' && (
-              <motion.div key="clubs" initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} transition={{ duration: 0.25 }} className="flex flex-col gap-6">
-                <div>
-                  <h2 className="text-3xl font-bold font-display text-text-primary mb-2">Explore Campus Clubs</h2>
-                  <p className="text-text-secondary text-sm">Discover communities and learn directly from the senior coordinators driving campus engineering fests.</p>
-                </div>
+              <motion.div key="clubs" initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} transition={{ duration: 0.25 }} className="flex flex-col gap-6 w-full max-w-5xl mx-auto">
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-border-color pb-4">
+                  <div>
+                    <h2 className="text-2xl font-bold font-display tracking-tight text-text-primary">Beyond Code: Campus Operations</h2>
+                    <p className="text-xs text-text-secondary mt-0.5">Explore creative sets, acoustic sessions, and athletic rosters live across Amrita Amaravati.</p>
+                  </div>
 
-                <div className="flex flex-wrap justify-between items-center gap-4 bg-bg-card border border-border-color p-4.5 rounded-xl shadow-sm">
+                  {/* Tab Filters for Focus Areas */}
                   <div className="flex gap-2 flex-wrap">
-                    {['All', 'Technical', 'Cultural', 'Sports', 'Social Impact'].map((cat) => (
-                      <button 
-                        key={cat} 
-                        className={`px-4 py-2 text-xs font-semibold rounded-full border transition-all ${clubCategoryFilter === cat ? 'bg-accent-primary border-accent-primary text-white shadow-sm' : 'bg-bg-secondary border-border-color text-text-secondary hover:bg-bg-elevated'}`}
-                        onClick={() => setClubCategoryFilter(cat)}
+                    {[
+                      { id: 'All', label: 'All Life' },
+                      { id: 'Creative', label: 'Media Production' },
+                      { id: 'Cultural', label: 'Cultural Arts' },
+                      { id: 'Sports', label: 'Athletics' },
+                      { id: 'Technical', label: 'Technical' }
+                    ].map(tab => (
+                      <button
+                        key={tab.id}
+                        onClick={() => setClubCategoryFilter(tab.id)}
+                        className={`px-3 py-1.5 text-xs font-semibold rounded-full border transition-all ${
+                          clubCategoryFilter === tab.id
+                            ? 'bg-accent-primary text-white border-accent-primary shadow-glow'
+                            : 'bg-bg-card text-text-secondary border-border-color hover:text-text-primary hover:bg-bg-elevated'
+                        }`}
                       >
-                        {cat}
+                        {tab.label}
                       </button>
                     ))}
                   </div>
-                  <button className="btn btn-secondary border-warning/20 text-warning hover:bg-warning/5 py-2 text-xs flex items-center gap-1.5 shadow-sm" onClick={() => { resetQuiz(); setShowQuizModal(true); }}>
-                    <Cpu className="w-4 h-4" />
-                    <span>⚡ Take Club Quiz</span>
-                  </button>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                {/* Main Clubs Grid Display Matrix */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   {clubs.filter(c => clubCategoryFilter === 'All' || c.category === clubCategoryFilter).map((club) => {
                     const isJoined = user && user.joined_clubs.includes(club.name);
+                    
+                    // Determine HSL styling and metadata dynamically
+                    const getStyles = (category) => {
+                      if (category === 'Creative') return { color: 'border-amber-500/30 text-amber-400', tag: 'Media Production', icon: Film, bgImg: 'https://images.unsplash.com/photo-1492691527719-9d1e07e534b4?auto=format&fit=crop&q=80&w=600' };
+                      if (category === 'Cultural') return { color: 'border-fuchsia-500/30 text-fuchsia-400', tag: 'Music & Fine Arts', icon: Music, bgImg: 'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?auto=format&fit=crop&q=80&w=600' };
+                      if (category === 'Sports') return { color: 'border-emerald-500/30 text-emerald-400', tag: 'Athletics & Fitness', icon: Trophy, bgImg: 'https://images.unsplash.com/photo-1508098682722-e99c43a406b2?auto=format&fit=crop&q=80&w=600' };
+                      return { color: 'border-accent-primary/30 text-accent-primary', tag: 'Engineering Tech', icon: Cpu, bgImg: 'https://images.unsplash.com/photo-1550751827-4bd374c3f58b?auto=format&fit=crop&q=80&w=600' };
+                    };
+                    
+                    const meta = getStyles(club.category);
+                    const ClubIcon = meta.icon;
+
                     return (
-                      <div key={club.id} className={`bg-bg-card border rounded-xl p-6 flex flex-col justify-between min-h-[260px] transition-all hover:-translate-y-1 relative shadow-sm ${club.name.includes('Chakravyuha') ? 'border-accent-primary shadow-glow' : 'border-border-color'}`} onClick={() => { setSelectedClub(club); setActiveClubTab('overview'); }}>
-                        {club.name.includes('Chakravyuha') && <span className="absolute -top-3.5 right-6 px-3 py-1 bg-accent-primary text-white font-bold text-[9px] uppercase tracking-wider rounded-md shadow-sm">featured</span>}
-                        <div>
-                          <div className="flex items-center gap-3.5 mb-4">
-                            <span className="text-3xl p-1 bg-bg-secondary rounded-lg border border-border-color w-12 h-12 flex items-center justify-center">{club.logo}</span>
-                            <div>
-                              <h4 className="font-bold text-sm text-text-primary leading-tight">{club.name}</h4>
-                              <span className="text-[10px] text-text-muted mt-1 block">{club.category} • {club.members_count} members</span>
+                      <div key={club.id} className="bg-bg-card border border-border-color rounded-2xl p-5 flex flex-col justify-between gap-5 group hover:border-border-hover transition-all relative overflow-hidden shadow-sm" onClick={() => { setSelectedClub(club); setActiveClubTab('overview'); }}>
+                        
+                        {club.name.includes('Chakravyuha') && (
+                          <span className="absolute top-4 right-4 px-2.5 py-0.5 bg-accent-primary text-white font-bold text-[8px] uppercase tracking-wider rounded border border-accent-primary z-20 shadow-glow">featured</span>
+                        )}
+
+                        <div className="space-y-4">
+                          {/* Header Meta Parameters */}
+                          <div className="flex items-center justify-between">
+                            <span className={`text-[9px] font-bold uppercase tracking-widest bg-bg-secondary px-2.5 py-0.5 rounded border ${meta.color}`}>
+                              {meta.tag}
+                            </span>
+                            <div className={`w-8 h-8 rounded-lg bg-bg-secondary border flex items-center justify-center ${meta.color}`}>
+                              <ClubIcon className="w-4 h-4" />
                             </div>
                           </div>
-                          <p className="text-xs text-text-secondary leading-relaxed line-clamp-3">{club.description}</p>
+
+                          <div>
+                            <h3 className="text-md font-bold text-text-primary group-hover:text-accent-primary transition-colors">{club.name}</h3>
+                            <div className="flex flex-wrap gap-1.5 mt-2">
+                              {(club.recruitment_roles || []).slice(0, 3).map((role, rIdx) => (
+                                <span key={rIdx} className="text-[9px] bg-bg-secondary text-text-secondary px-2 py-0.5 rounded border border-border-color/60 font-medium">
+                                  ✦ {role}
+                                </span>
+                              ))}
+                              {(club.recruitment_roles || []).length > 3 && (
+                                <span className="text-[9px] bg-bg-secondary text-text-muted px-2 py-0.5 rounded border border-border-color/60 font-medium">
+                                  +{(club.recruitment_roles || []).length - 3} more
+                                </span>
+                              )}
+                            </div>
+                          </div>
+
+                          {/* Media Reel / Aspect Ratio visual block */}
+                          <div className="relative aspect-video rounded-xl bg-gradient-to-br from-bg-secondary to-bg-primary border border-border-color/60 overflow-hidden group/reel my-2" onClick={(e) => e.stopPropagation()}>
+                            <div className="absolute inset-0 bg-cover bg-center bg-no-repeat opacity-30 mix-blend-screen scale-105 group-hover/reel:scale-100 transition-transform duration-700" style={{ backgroundImage: `url('${meta.bgImg}')` }} />
+                            <div className="absolute inset-0 bg-gradient-to-t from-bg-primary via-transparent to-transparent opacity-90" />
+                            
+                            <div className="absolute inset-0 p-3.5 flex flex-col justify-between z-10">
+                              <span className="text-[8px] font-bold tracking-widest text-accent-primary uppercase bg-bg-primary/90 backdrop-blur-md px-2 py-0.5 rounded border border-border-color w-max">
+                                {club.category === 'Creative' ? '🎬 Live Preview' : club.category === 'Cultural' ? '🎵 Live Jam' : club.category === 'Sports' ? '⚽ Highlights' : '💻 Project Demo'}
+                              </span>
+                              <div className="flex items-center gap-3">
+                                <div className="w-8 h-8 rounded-full bg-accent-primary/15 backdrop-blur-sm border border-accent-primary/30 flex items-center justify-center group-hover/reel:bg-accent-primary group-hover/reel:text-white transition-all cursor-pointer" onClick={() => alert(`Launching ${club.name} visual preview stream...`)}>
+                                  <Play className="w-3.5 h-3.5 text-accent-primary group-hover/reel:text-white transition-colors translate-x-0.5" />
+                                </div>
+                                <div>
+                                  <h5 className="text-[11px] font-bold text-text-primary line-clamp-1">
+                                    {club.category === 'Creative' ? 'Drishya Trailer (Finding My Pace)' : club.category === 'Cultural' ? 'Aarambh Induction Jam Room' : club.category === 'Sports' ? 'Scrimmage Practice Highlights' : 'Chakravyuha Hackfest Briefing'}
+                                  </h5>
+                                  <p className="text-[8px] text-text-muted">Aspect Ratio: 16:9 HD Broadcast</p>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Roster Metrics / Equipment setup */}
+                          <div className="flex flex-wrap items-center justify-between text-[10px] text-text-muted pt-2 border-t border-border-color/30">
+                            <span>👥 Active Roster: <strong className="text-text-primary">{club.members_count} members</strong></span>
+                            {club.club_amenities && club.club_amenities.length > 0 && (
+                              <span className="truncate max-w-[200px]">🛠 Setup: <strong className="text-text-secondary">{club.club_amenities[0]}</strong></span>
+                            )}
+                          </div>
+
+                          {/* Sub-widget: Specific Operations Session */}
+                          {club.nextActivity && (
+                            <div className="bg-bg-secondary border border-border-color rounded-xl p-4 space-y-3 relative overflow-hidden group/session" onClick={(e) => e.stopPropagation()}>
+                              <div className="absolute -right-8 -bottom-8 w-24 h-24 rounded-full bg-accent-primary/5 blur-2xl group-hover/session:bg-accent-primary/10 transition-colors" />
+                              
+                              <div className="flex items-center gap-2 text-[9px] font-bold text-accent-primary uppercase tracking-wider">
+                                <Calendar className="w-3 h-3" />
+                                <span>Active Session: {club.nextActivity.type}</span>
+                              </div>
+                              <h4 className="text-xs font-semibold text-text-primary leading-tight line-clamp-1">{club.nextActivity.title}</h4>
+                              
+                              <div className="flex flex-col gap-1 text-[10px] text-text-secondary pt-1">
+                                <span>🕒 Timeline Parameters: <strong className="text-text-primary">{club.nextActivity.time}</strong></span>
+                                <span>📍 Geographic Asset: <strong className="text-text-primary">{club.nextActivity.venue}</strong></span>
+                              </div>
+
+                              {/* Registration Slot Bar */}
+                              <div className="flex items-center justify-between gap-4 pt-2.5 border-t border-border-color/40 mt-2">
+                                <span className="text-[9px] text-text-muted font-medium">Available Slots: <strong className="text-accent-primary">{club.nextActivity.slots_available} seats</strong></span>
+                                
+                                {(() => {
+                                  const isRegistered = user && user.joined_activities && user.joined_activities.includes(club.nextActivity.title);
+                                  return (
+                                    <button 
+                                      onClick={() => handleJoinActivity(club.nextActivity.title)}
+                                      className={`px-3 py-1.5 rounded-lg font-bold text-[10px] flex items-center gap-1 transition-all ${
+                                        isRegistered 
+                                          ? 'bg-success/10 text-success border border-success/30 hover:bg-success/20' 
+                                          : 'bg-accent-primary hover:bg-accent-primary/95 text-white'
+                                      }`}
+                                    >
+                                      {isRegistered ? (
+                                        <>
+                                          <CheckCircle className="w-3 h-3" />
+                                          <span>Roster Entry Confirmed</span>
+                                        </>
+                                      ) : (
+                                        <span>Register for Action</span>
+                                      )}
+                                    </button>
+                                  );
+                                })()}
+                              </div>
+                            </div>
+                          )}
                         </div>
-                        <div className="pt-4 border-t border-border-color flex justify-between items-center mt-5 text-[10px] text-text-muted">
-                          <span>Recruiting: August</span>
+
+                        {/* Actions Tier */}
+                        <div className="flex items-center gap-3 pt-2 border-t border-border-color">
                           <button 
-                            className={`btn px-4.5 py-2 text-[10px] font-bold ${isJoined ? 'btn-secondary text-success border-success/15 bg-success/5' : 'btn-primary'}`}
                             onClick={(e) => { e.stopPropagation(); handleJoinClub(club.name); }}
+                            className={`btn px-4.5 py-2 text-[10px] font-bold flex-1 ${isJoined ? 'btn-secondary text-success border-success/15 bg-success/5' : 'btn-primary'}`}
                           >
-                            {isJoined ? 'Joined' : 'Explore Community'}
+                            {isJoined ? 'Joined Club' : 'Explore Community'}
+                          </button>
+                          <button 
+                            className="btn btn-secondary text-[10px] font-bold !py-2"
+                            onClick={() => { setSelectedClub(club); setActiveClubTab('overview'); }}
+                          >
+                            View Portfolios
                           </button>
                         </div>
+
                       </div>
                     );
                   })}
@@ -1576,6 +1739,36 @@ export default function App() {
                     <h3 className="font-bold text-sm text-text-primary">About our community</h3>
                     <p className="text-xs text-text-secondary leading-relaxed">{selectedClub.detailed_desc}</p>
                     
+                    {/* Gear / Equipment Setup */}
+                    {selectedClub.club_amenities && selectedClub.club_amenities.length > 0 && (
+                      <div className="space-y-2 mt-2">
+                        <h3 className="font-bold text-xs text-text-primary uppercase tracking-wider">⚙ Equipment & Assets</h3>
+                        <div className="flex flex-wrap gap-2">
+                          {selectedClub.club_amenities.map((amenity, index) => (
+                            <span key={index} className="text-[10px] bg-bg-primary text-text-secondary px-3 py-1 rounded-lg border border-border-color font-medium">
+                              🛠 {amenity}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                    
+                    {/* Active Live Session Details */}
+                    {selectedClub.nextActivity && (
+                      <div className="bg-bg-primary border border-border-color rounded-xl p-4 space-y-3 mt-2">
+                        <div className="flex items-center gap-2 text-[10px] font-bold text-accent-primary uppercase tracking-wider">
+                          <Calendar className="w-3.5 h-3.5" />
+                          <span>Active Session: {selectedClub.nextActivity.type}</span>
+                        </div>
+                        <h4 className="text-xs font-bold text-text-primary leading-tight">{selectedClub.nextActivity.title}</h4>
+                        <div className="flex flex-col gap-1 text-[10px] text-text-secondary pt-1">
+                          <span>🕒 Timeline: <strong className="text-text-primary">{selectedClub.nextActivity.time}</strong></span>
+                          <span>📍 Location Venue: <strong className="text-text-primary">{selectedClub.nextActivity.venue}</strong></span>
+                          <span>👥 Roster Capacity: <strong className="text-accent-primary">{selectedClub.nextActivity.slots_available} slots left</strong></span>
+                        </div>
+                      </div>
+                    )}
+
                     <h3 className="font-bold text-sm text-text-primary mt-3">Visual Club Gallery</h3>
                     <div className="grid grid-cols-3 gap-3">
                       {selectedClub.gallery.map((g, i) => (
@@ -1589,11 +1782,26 @@ export default function App() {
                   <div className="flex flex-col gap-4 animate-fadeIn leading-relaxed">
                     <h3 className="font-bold text-sm text-text-primary">Audition & Recruitment guidelines</h3>
                     <p className="text-xs text-text-secondary leading-relaxed">{selectedClub.recruitment_info}</p>
+                    
+                    {/* Open Recruitment Auditions Roles */}
+                    {selectedClub.recruitment_roles && selectedClub.recruitment_roles.length > 0 && (
+                      <div className="space-y-2 mt-2">
+                        <h3 className="font-bold text-xs text-text-primary uppercase tracking-wider">✨ Open Audition Roles</h3>
+                        <div className="flex flex-wrap gap-2">
+                          {selectedClub.recruitment_roles.map((role, rIdx) => (
+                            <span key={rIdx} className="text-[10px] bg-bg-primary text-accent-primary px-3 py-1 rounded-lg border border-accent-primary/20 font-semibold">
+                              ✦ {role}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
                     <div className="p-4 bg-bg-primary border border-border-color rounded-lg text-[10px] text-text-muted flex items-start gap-2.5 leading-relaxed mt-2">
                       <Terminal className="w-5 h-5 text-accent-primary flex-shrink-0" />
                       <div>
                         <strong className="text-text-secondary block mb-0.5">Career Guidance Note:</strong>
-                        "Joining a club early like Chakravyuha Technical Club triggers peer engineering workflows and builds industry-standard portfolios. class-based records are standard, but hackathon project builds differentiate you in 3rd-year placement drives." - Rohan S.
+                        "Joining a club early like {selectedClub.name} triggers peer engineering workflows and builds industry-standard portfolios. class-based records are standard, but hackathon project builds differentiate you in 3rd-year placement drives." - Rohan S.
                       </div>
                     </div>
                   </div>

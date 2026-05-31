@@ -120,7 +120,7 @@ app.post('/api/auth/register', async (req, res) => {
     const userId = result.rows[0].id;
     const token = jwt.sign({ id: userId, email, name, branch, semester }, JWT_SECRET, { expiresIn: '7d' });
     
-    res.json({ token, user: { id: userId, email, name, branch, semester, cgpa: 9.0, achievements: [], joined_clubs: ['Chakravyuha Technical Club'] } });
+    res.json({ token, user: { id: userId, email, name, branch, semester, cgpa: 9.0, achievements: [], joined_clubs: ['Chakravyuha Technical Club'], joined_activities: [] } });
   } catch (err) {
     if (err instanceof z.ZodError) {
       return res.status(400).json({ error: 'Validation failed. Password must be 6+ characters.' });
@@ -156,7 +156,8 @@ app.post('/api/auth/login', async (req, res) => {
         semester: user.semester,
         cgpa: user.cgpa,
         achievements: JSON.parse(user.achievements_json || '[]'),
-        joined_clubs: JSON.parse(user.joined_clubs_json || '["Chakravyuha Technical Club"]')
+        joined_clubs: JSON.parse(user.joined_clubs_json || '["Chakravyuha Technical Club"]'),
+        joined_activities: JSON.parse(user.joined_activities_json || '[]')
       }
     });
   } catch (err) {
@@ -200,7 +201,8 @@ app.post('/api/auth/google-login', async (req, res) => {
         semester: user.semester,
         cgpa: user.cgpa,
         achievements: JSON.parse(user.achievements_json || '[]'),
-        joined_clubs: JSON.parse(user.joined_clubs_json || '["Chakravyuha Technical Club"]')
+        joined_clubs: JSON.parse(user.joined_clubs_json || '["Chakravyuha Technical Club"]'),
+        joined_activities: JSON.parse(user.joined_activities_json || '[]')
       }
     });
   } catch (err) {
@@ -222,7 +224,8 @@ app.get('/api/auth/me', authenticateToken, async (req, res) => {
       semester: user.semester,
       cgpa: user.cgpa,
       achievements: JSON.parse(user.achievements_json || '[]'),
-      joined_clubs: JSON.parse(user.joined_clubs_json || '["Chakravyuha Technical Club"]')
+      joined_clubs: JSON.parse(user.joined_clubs_json || '["Chakravyuha Technical Club"]'),
+      joined_activities: JSON.parse(user.joined_activities_json || '[]')
     });
   } catch (err) {
     res.status(500).json({ error: 'Me profile extraction pipeline failure.' });
@@ -296,19 +299,62 @@ app.post('/api/resources/download/:id', async (req, res) => {
 app.get('/api/clubs', async (req, res) => {
   try {
     const clubsRes = await query('SELECT * FROM clubs');
+    const activitiesRes = await query('SELECT * FROM club_activities');
     const clubs = [];
     
     for (const club of clubsRes.rows) {
       const coordRes = await query('SELECT * FROM coordinators WHERE club_id = $1', [club.id]);
+      
+      // Determine slug for activity match
+      let clubSlug = '';
+      if (club.name.includes('Chakravyuha')) clubSlug = 'chakravyuha';
+      else if (club.name.includes('Drishya')) clubSlug = 'drsya-media';
+      else if (club.name.includes('Naadam')) clubSlug = 'naadam-arts';
+      else if (club.name.includes('Avisruta')) clubSlug = 'avisruta-athletics';
+      
+      const nextActivity = activitiesRes.rows.find(act => 
+        act.club_id === clubSlug || act.club_id === club.id.toString()
+      );
+      
+      // Parse arrays safely
+      let amenities = [];
+      if (club.club_amenities) {
+        try {
+          amenities = Array.isArray(club.club_amenities) ? club.club_amenities : JSON.parse(club.club_amenities);
+        } catch (e) {
+          // If comma-separated in some fallback
+          amenities = typeof club.club_amenities === 'string' ? club.club_amenities.split(',') : [];
+        }
+      }
+      
+      let roles = [];
+      if (club.recruitment_roles) {
+        try {
+          roles = Array.isArray(club.recruitment_roles) ? club.recruitment_roles : JSON.parse(club.recruitment_roles);
+        } catch (e) {
+          roles = typeof club.recruitment_roles === 'string' ? club.recruitment_roles.split(',') : [];
+        }
+      }
+      
       clubs.push({
         ...club,
-        gallery: JSON.parse(club.gallery_json || '[]'),
-        coordinators: coordRes.rows
+        gallery: Array.isArray(club.gallery_json) ? club.gallery_json : JSON.parse(club.gallery_json || '[]'),
+        club_amenities: amenities,
+        recruitment_roles: roles,
+        coordinators: coordRes.rows,
+        nextActivity: nextActivity ? {
+          title: nextActivity.activity_title,
+          type: nextActivity.activity_type,
+          time: nextActivity.scheduled_time,
+          venue: nextActivity.venue_location,
+          slots_available: nextActivity.slots_available
+        } : null
       });
     }
     
     res.json(clubs);
   } catch (err) {
+    console.error('Clubs loading crash:', err);
     res.status(500).json({ error: 'Clubs loading crash.' });
   }
 });
@@ -333,6 +379,38 @@ app.post('/api/clubs/join', authenticateToken, async (req, res) => {
     }
   } catch (err) {
     res.status(500).json({ error: 'Club membership toggle failed.' });
+  }
+});
+
+app.post('/api/clubs/activities/register', authenticateToken, async (req, res) => {
+  try {
+    const { activityTitle } = req.body;
+    
+    const userRes = await query('SELECT joined_activities_json FROM users WHERE id = $1', [req.user.id]);
+    let joined = [];
+    if (userRes.rowCount > 0 && userRes.rows[0].joined_activities_json) {
+      try {
+        joined = JSON.parse(userRes.rows[0].joined_activities_json || '[]');
+      } catch (e) {
+        joined = [];
+      }
+    }
+    
+    let registered = false;
+    if (joined.includes(activityTitle)) {
+      joined = joined.filter(a => a !== activityTitle);
+      await query('UPDATE club_activities SET slots_available = slots_available + 1 WHERE activity_title = $1', [activityTitle]);
+    } else {
+      joined.push(activityTitle);
+      registered = true;
+      await query('UPDATE club_activities SET slots_available = slots_available - 1 WHERE activity_title = $1', [activityTitle]);
+    }
+    
+    await query('UPDATE users SET joined_activities_json = $1 WHERE id = $2', [JSON.stringify(joined), req.user.id]);
+    res.json({ success: true, registered, activities: joined });
+  } catch (err) {
+    console.error('Activity registration error:', err);
+    res.status(500).json({ error: 'Activity registration failed.' });
   }
 });
 

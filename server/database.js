@@ -68,27 +68,97 @@ class SmartDBPool {
   }
 
   initFallbackDb() {
-    if (!fs.existsSync(FALLBACK_DB_PATH)) {
-      console.log('✦ Creating New Graceful Local Database File (db_fallback.json) ✦');
+    let dbExists = fs.existsSync(FALLBACK_DB_PATH);
+    let shouldReset = false;
+    if (dbExists) {
+      try {
+        const content = JSON.parse(fs.readFileSync(FALLBACK_DB_PATH, 'utf-8'));
+        if (!content.clubs || content.clubs.length < 4 || !content.club_activities || !content.map_locations[0].club_amenities) {
+          shouldReset = true;
+        }
+      } catch (e) {
+        shouldReset = true;
+      }
+    }
+    if (!dbExists || shouldReset) {
+      console.log('✦ Creating/Upgrading Graceful Local Database File (db_fallback.json) ✦');
       const initialDb = {
         map_locations: [
-          { id: 'acad_a', name: 'Academic Block A', description: 'Main academic building housing engineering classrooms, basic science physics/chemistry labs, and centralized administration offices.', asset_category: 'academic', floors_count: 4, accessibility_verified: true, campus_wifi_ssid: 'Amrita_Guest_5G', center_x: 250, center_y: 180, walking_time_from_hostel: 240 },
-          { id: 'acad_b', name: 'Academic Block B', description: 'Engineering & Advanced Computing Hub. Houses core CSE/ECE system processing computer labs, cybersecurity wings, and faculty research cabins.', asset_category: 'academic', floors_count: 5, accessibility_verified: true, campus_wifi_ssid: 'Amrita_Academic_WiFi', center_x: 380, center_y: 150, walking_time_from_hostel: 180 },
-          { id: 'hostel_boys', name: 'Boys Hostel Block', description: 'Residential block for male engineering students. Equipped with indoor gym spaces, internal laundry setups, and digital common rooms.', asset_category: 'hostel', floors_count: 8, accessibility_verified: true, campus_wifi_ssid: 'Amrita_Hostel_Net', center_x: 180, center_y: 350, walking_time_from_hostel: 0 },
-          { id: 'hostel_girls', name: 'Girls Hostel Block', description: 'Highly secure residential complex for female students containing study common halls, multi-purpose recreational spaces, and security counters.', asset_category: 'hostel', floors_count: 8, accessibility_verified: true, campus_wifi_ssid: 'Amrita_Hostel_Net', center_x: 500, center_y: 320, walking_time_from_hostel: 0 },
-          { id: 'mess', name: 'Central Mess Complex', description: 'Grand multi-tiered dining hall processing vegetarian culinary routines daily for hostellers across distinct student wings.', asset_category: 'mess', floors_count: 2, accessibility_verified: true, campus_wifi_ssid: 'No public WiFi', center_x: 340, center_y: 300, walking_time_from_hostel: 120 },
-          { id: 'sports', name: 'Avisruta Sports Arena', description: 'Expansive outdoor layout tracking basketball courts, volleyball segments, and a massive playground infrastructure for football and cricket.', asset_category: 'sports', floors_count: 1, accessibility_verified: true, campus_wifi_ssid: 'Amrita_Sports_WiFi', center_x: 620, center_y: 220, walking_time_from_hostel: 240 },
-          { id: 'gate', name: 'Main Security Gate', description: 'Primary perimeter entry check-point. Rigorous structural verification matrix enforced via student identity smart cards 24/7.', asset_category: 'utility', floors_count: 1, accessibility_verified: true, campus_wifi_ssid: 'Amrita_Security_Secured', center_x: 80, center_y: 250, walking_time_from_hostel: 720 }
+          { id: 'acad_a', name: 'Academic Block A', description: 'Main academic building housing engineering classrooms, basic science physics/chemistry labs, and centralized administration offices.', asset_category: 'academic', floors_count: 4, accessibility_verified: true, campus_wifi_ssid: 'Amrita_Guest_5G', center_x: 250, center_y: 180, walking_time_from_hostel: 240, club_amenities: [], recruitment_roles: [] },
+          { id: 'acad_b', name: 'Academic Block B', description: 'Engineering & Advanced Computing Hub. Houses core CSE/ECE system processing computer labs, cybersecurity wings, and faculty research cabins.', asset_category: 'academic', floors_count: 5, accessibility_verified: true, campus_wifi_ssid: 'Amrita_Academic_WiFi', center_x: 380, center_y: 150, walking_time_from_hostel: 180, club_amenities: [], recruitment_roles: [] },
+          { id: 'hostel_boys', name: 'Boys Hostel Block', description: 'Residential block for male engineering students. Equipped with indoor gym spaces, internal laundry setups, and digital common rooms.', asset_category: 'hostel', floors_count: 8, accessibility_verified: true, campus_wifi_ssid: 'Amrita_Hostel_Net', center_x: 180, center_y: 350, walking_time_from_hostel: 0, club_amenities: [], recruitment_roles: [] },
+          { id: 'hostel_girls', name: 'Girls Hostel Block', description: 'Highly secure residential complex for female students containing study common halls, multi-purpose recreational spaces, and security counters.', asset_category: 'hostel', floors_count: 8, accessibility_verified: true, campus_wifi_ssid: 'Amrita_Hostel_Net', center_x: 500, center_y: 320, walking_time_from_hostel: 0, club_amenities: [], recruitment_roles: [] },
+          { id: 'mess', name: 'Central Mess Complex', description: 'Grand multi-tiered dining hall processing vegetarian culinary routines daily for hostellers across distinct student wings.', asset_category: 'mess', floors_count: 2, accessibility_verified: true, campus_wifi_ssid: 'No public WiFi', center_x: 340, center_y: 300, walking_time_from_hostel: 120, club_amenities: [], recruitment_roles: [] },
+          { id: 'sports', name: 'Avisruta Sports Arena', description: 'Expansive outdoor layout tracking basketball courts, volleyball segments, and a massive playground infrastructure for football and cricket.', asset_category: 'sports', floors_count: 1, accessibility_verified: true, campus_wifi_ssid: 'Amrita_Sports_WiFi', center_x: 620, center_y: 220, walking_time_from_hostel: 240, club_amenities: ['Basketball Courts', 'Volleyball Courts', 'Soccer Grounds'], recruitment_roles: ['Point Guard', 'Striker', 'Volleyball Setter'] },
+          { id: 'gate', name: 'Main Security Gate', description: 'Primary perimeter entry check-point. Rigorous structural verification matrix enforced via student identity smart cards 24/7.', asset_category: 'utility', floors_count: 1, accessibility_verified: true, campus_wifi_ssid: 'Amrita_Security_Secured', center_x: 80, center_y: 250, walking_time_from_hostel: 720, club_amenities: [], recruitment_roles: [] }
         ],
         users: [],
         clubs: [
-          { id: 1, name: 'Chakravyuha Technical Club', logo: '⚡', category: 'Technical', description: 'The premier technical student organization at Amrita Amaravati. We empower freshers to dive deep into Web3, AI, Cyber Security, App Development, and Competitive Programming through rigorous bootcamps, workshops, and our signature annual hackathon.', detailed_desc: 'Chakravyuha is not just a club, it is the center of engineering culture on campus. Founded with the mission to bridge the gap between classroom theory and industry-grade engineering, we conduct weekly coding sprints, mentor student startups, and host expert talks from alumni at FAANG and top research labs.', members_count: 142, recruitment_info: 'Applications open in August 2026. Consists of a basic coding screening, followed by a task round and a friendly senior panel interview. High passion wins over pre-existing coding skills!', gallery_json: '["Hackathon 2025", "Linux Installfest", "AI Workshop"]' },
-          { id: 2, name: 'Naadam Cultural Club', logo: '🎨', category: 'Cultural', description: 'The heartbeat of music, dance, fine arts, and theater at Amrita. We organize college fests, cultural nights, and national-level competition delegations.', detailed_desc: 'Naadam brings together artists of all varieties under one roof. Whether you play the mridangam, bass guitar, perform classical Bharatanatyam, street hip-hop, or sketch digital art, Naadam has a subgroup for you to shine.', members_count: 95, recruitment_info: 'Auditions open during the third week of August 2026. Prepare a 2-minute performance representing your art form.', gallery_json: '["Gokulashtami Night", "Aarambh Fest", "Art Exhibition"]' }
+          {
+            id: 1,
+            name: 'Chakravyuha Technical Club',
+            logo: '⚡',
+            category: 'Technical',
+            description: 'The premier technical student organization at Amrita Amaravati. We empower freshers to dive deep into Web3, AI, Cyber Security, App Development, and Competitive Programming through bootcamps, workshops, and our signature annual hackathon.',
+            detailed_desc: 'Chakravyuha is not just a club, it is the center of engineering culture on campus. Founded with the mission to bridge the gap between classroom theory and industry-grade engineering, we conduct weekly coding sprints, mentor student startups, and host expert talks from alumni at FAANG and top research labs.',
+            members_count: 142,
+            recruitment_info: 'Applications open in August 2026. Consists of a basic coding screening, followed by a task round and a friendly senior panel interview. High passion wins over pre-existing coding skills!',
+            gallery_json: '["Hackathon 2025", "Linux Installfest", "AI Workshop"]',
+            club_amenities: ['GPU Cluster Rig', 'IoT Prototyping Lab', 'VR Headsets'],
+            recruitment_roles: ['Full Stack Engineer', 'AI/ML Researcher', 'Smart Contract Auditor']
+          },
+          {
+            id: 2,
+            name: 'Team Drishya // Right Side Vision',
+            logo: '🎬',
+            category: 'Creative',
+            description: 'Multimedia and film production powerhouse. We handle cinematography, photography, creative editing, scriptwriting, and direct campus trailer launches.',
+            detailed_desc: 'Team Drishya is a group of visual storytellers, editing masters, and sound designers. We organize cinema workshops, short film set runs, and are the official eyes of all cultural and technical fests at Amrita.',
+            members_count: 48,
+            recruitment_info: 'Recruitment tasks open in August 2026. Submit a portfolio of 3 edits, photos, or scripts to get shortlisted for the jury panel.',
+            gallery_json: '["Trailer Launch", "Focal Lengths 101", "Short Film Set"]',
+            club_amenities: ['Sony FX3 Cinema Rig', 'DJI Ronin Gimbal', 'Davinci Resolve Studio Suite'],
+            recruitment_roles: ['Director of Photography', 'Audio Manipulator', 'Colorist', 'Scriptwriter']
+          },
+          {
+            id: 3,
+            name: 'Naadam Cultural Club',
+            logo: '🎨',
+            category: 'Cultural',
+            description: 'The heartbeat of music, dance, fine arts, and theater at Amrita. We organize college fests, cultural nights, and national-level competition delegations.',
+            detailed_desc: 'Naadam brings together artists of all varieties under one roof. Whether you play the mridangam, bass guitar, perform classical Bharatanatyam, street hip-hop, or sketch digital art, Naadam has a subgroup for you to shine.',
+            members_count: 95,
+            recruitment_info: 'Auditions open during the third week of August 2026. Prepare a 2-minute performance representing your art form.',
+            gallery_json: '["Gokulashtami Night", "Aarambh Fest", "Art Exhibition"]',
+            club_amenities: ['Yamaha Stage Piano', 'Shure SM58 Microphones', 'Line 6 Guitar Processors'],
+            recruitment_roles: ['Classical Vocalist', 'Bass Guitarist', 'Digital Illustrator']
+          },
+          {
+            id: 4,
+            name: 'Avisruta Sports Club',
+            logo: '🏆',
+            category: 'Sports',
+            description: 'Leading all athletic schedules, varsity teams, gym routines, and campus-wide league tournaments across Amrita.',
+            detailed_desc: 'Avisruta keeps the campus fit and competitive. We manage the sports arena, run official practices for football, basketball, and volleyball, and orchestrate the annual Inter-Block Olympics.',
+            members_count: 110,
+            recruitment_info: 'Roster trials held on main arena ground in August 2026. Consists of a fitness drill, skill showcase, and match scrimmages.',
+            gallery_json: '["Inter-Block Soccer", "Basketball Finals", "Avisruta Arena Launch"]',
+            club_amenities: ['Basketball Courts', 'Volleyball Courts', 'Campus Soccer Grounds', 'Pro Volleyball Nets'],
+            recruitment_roles: ['Point Guard', 'Striker', 'Volleyball Setter']
+          }
         ],
         coordinators: [
           { id: 1, club_id: 1, name: 'Rohan Sharma', role: 'President', year: '3rd Year B.Tech CSE', contact: 'rohan.sharma@am.students.edu', linkedin: '#', insta: '#' },
           { id: 2, club_id: 1, name: 'Sneha Reddy', role: 'Technical Lead', year: '3rd Year B.Tech CSE (AI)', contact: 'sneha.reddy@am.students.edu', linkedin: '#', insta: '#' },
-          { id: 3, club_id: 2, name: 'Vikram Sen', role: 'Cultural Secretary', year: '4th Year B.Tech ECE', contact: 'vikram.sen@am.students.edu', linkedin: '#', insta: '#' }
+          { id: 3, club_id: 3, name: 'Vikram Sen', role: 'Cultural Secretary', year: '4th Year B.Tech ECE', contact: 'vikram.sen@am.students.edu', linkedin: '#', insta: '#' },
+          { id: 4, club_id: 2, name: 'Akash Kumar', role: 'Media Head', year: '3rd Year B.Tech ECE', contact: 'akash.kumar@am.students.edu', linkedin: '#', insta: '#' },
+          { id: 5, club_id: 4, name: 'Karthik Rao', role: 'Sports Captain', year: '4th Year B.Tech ME', contact: 'karthik.rao@am.students.edu', linkedin: '#', insta: '#' }
+        ],
+        club_activities: [
+          { id: 1, club_id: 'drsya-media', activity_title: 'Cinematic Trailer Shoot (Finding My Pace)', activity_type: 'Film Set', scheduled_time: new Date(Date.now() + 86400000).toISOString(), venue_location: 'Academic Block B Horizon Lawn', slots_available: 15 },
+          { id: 2, club_id: 'naadam-arts', activity_title: 'Aarambh Induction Jam Session', activity_type: 'Acoustic Jam', scheduled_time: new Date(Date.now() + 172800000).toISOString(), venue_location: 'Main Auditorium Common Stage', slots_available: 25 },
+          { id: 3, club_id: 'avisruta-athletics', activity_title: 'Inter-Block Football Practice Run', activity_type: 'Match Scrimmage', scheduled_time: new Date(Date.now() + 259200000).toISOString(), venue_location: 'Campus Soccer Grounds', slots_available: 18 },
+          { id: 4, club_id: 'chakravyuha', activity_title: 'Annual Chakravyuha Hackfest Briefing', activity_type: 'Hackathon Info Session', scheduled_time: new Date(Date.now() + 345600000).toISOString(), venue_location: 'Academic Block B Seminar Hall', slots_available: 40 }
         ],
         resources: [
           { id: 1, title: 'Data Structures Lecture Notes (Complete)', branch: 'CSE', semester: 'Semester 3', subject: 'Data Structures', type: 'Notes', uploader_name: 'Senior Rohan S.', uploader_avatar: 'RS', downloads: 184, file_url: '#', rating: 4.8, is_verified: true, created_at: new Date().toISOString() },
@@ -111,6 +181,18 @@ class SmartDBPool {
           { id: 1, log_type: 'system', action: 'Initialize Fallback', target: 'Campus Compass Database', username: 'System', created_at: new Date().toISOString() }
         ]
       };
+      
+      if (dbExists) {
+        try {
+          const oldDb = JSON.parse(fs.readFileSync(FALLBACK_DB_PATH, 'utf-8'));
+          if (oldDb.users) initialDb.users = oldDb.users;
+          if (oldDb.resources && oldDb.resources.length > 3) initialDb.resources = oldDb.resources;
+          if (oldDb.questions && oldDb.questions.length > 2) initialDb.questions = oldDb.questions;
+          if (oldDb.answers && oldDb.answers.length > 1) initialDb.answers = oldDb.answers;
+          if (oldDb.comments && oldDb.comments.length > 1) initialDb.comments = oldDb.comments;
+        } catch(e) {}
+      }
+      
       fs.writeFileSync(FALLBACK_DB_PATH, JSON.stringify(initialDb, null, 2));
     }
   }
@@ -128,6 +210,43 @@ class SmartDBPool {
     const db = this.readDb();
     let normalizedText = text.replace(/\s+/g, ' ').trim();
     
+    // 0. New Fallback endpoints for non-coding telemetry and registrations
+    if (normalizedText.startsWith('SELECT * FROM club_activities')) {
+      return { rows: db.club_activities, rowCount: db.club_activities.length };
+    }
+
+    if (normalizedText.includes('SELECT joined_activities_json FROM users WHERE id = $1')) {
+      const id = parseInt(params[0]);
+      const user = db.users.find(u => u.id === id);
+      const rows = user ? [{ joined_activities_json: user.joined_activities_json || '[]' }] : [];
+      return { rows, rowCount: rows.length };
+    }
+
+    if (normalizedText.includes('UPDATE users SET joined_activities_json = $1 WHERE id = $2')) {
+      const joinedVal = params[0];
+      const id = parseInt(params[1]);
+      const u = db.users.find(item => item.id === id);
+      if (u) u.joined_activities_json = joinedVal;
+      this.writeDb(db);
+      return { rows: [], rowCount: 1 };
+    }
+
+    if (normalizedText.startsWith('UPDATE club_activities SET slots_available = slots_available + 1 WHERE activity_title = $1')) {
+      const title = params[0];
+      const c = db.club_activities.find(item => item.activity_title === title);
+      if (c) c.slots_available++;
+      this.writeDb(db);
+      return { rows: [], rowCount: 1 };
+    }
+
+    if (normalizedText.startsWith('UPDATE club_activities SET slots_available = slots_available - 1 WHERE activity_title = $1')) {
+      const title = params[0];
+      const c = db.club_activities.find(item => item.activity_title === title);
+      if (c) c.slots_available--;
+      this.writeDb(db);
+      return { rows: [], rowCount: 1 };
+    }
+
     // 1. SELECT * FROM map_locations ORDER BY name ASC
     if (normalizedText.startsWith('SELECT * FROM map_locations ORDER BY name ASC')) {
       const list = [...db.map_locations];
@@ -774,6 +893,45 @@ export async function initializeDatabase() {
       )
     `);
 
+    // 13. Club Activities & Upgrades (Creative, Cultural, Sports modules)
+    try {
+      await query(`
+        ALTER TABLE map_locations ADD COLUMN IF NOT EXISTS club_amenities TEXT[];
+        ALTER TABLE map_locations ADD COLUMN IF NOT EXISTS recruitment_roles TEXT[];
+      `);
+    } catch (e) {
+      console.warn("Non-critical: Alter map_locations failed, typical of SQLite fallback or columns already exist.");
+    }
+    
+    try {
+      await query(`
+        ALTER TABLE clubs ADD COLUMN IF NOT EXISTS club_amenities TEXT[];
+        ALTER TABLE clubs ADD COLUMN IF NOT EXISTS recruitment_roles TEXT[];
+      `);
+    } catch (e) {
+      console.warn("Non-critical: Alter clubs failed.");
+    }
+
+    try {
+      await query(`
+        ALTER TABLE users ADD COLUMN IF NOT EXISTS joined_activities_json TEXT DEFAULT '[]';
+      `);
+    } catch (e) {
+      console.warn("Non-critical: Alter users joined_activities failed.");
+    }
+
+    await query(`
+      CREATE TABLE IF NOT EXISTS club_activities (
+        id SERIAL PRIMARY KEY,
+        club_id VARCHAR(50) NOT NULL,
+        activity_title VARCHAR(255) NOT NULL,
+        activity_type VARCHAR(50) NOT NULL,
+        scheduled_time TIMESTAMP WITH TIME ZONE NOT NULL,
+        venue_location VARCHAR(255) NOT NULL,
+        slots_available INT DEFAULT 20
+      )
+    `);
+
     // --- SEED TABLES IF EMPTY ---
     await seedTables();
   } catch (err) {
@@ -806,34 +964,66 @@ async function seedTables() {
     `);
   }
 
-  // Seed Clubs
+  // Seed Clubs & Activities
   const clubCount = await query('SELECT COUNT(*) as count FROM clubs');
   if (parseInt(clubCount.rows[0].count) === 0) {
-    console.log('Seeding clubs and coordinators...');
+    console.log('Seeding clubs, activities and coordinators...');
     const chakRes = await query(`
-      INSERT INTO clubs (name, logo, category, description, detailed_desc, members_count, recruitment_info, gallery_json)
+      INSERT INTO clubs (name, logo, category, description, detailed_desc, members_count, recruitment_info, gallery_json, club_amenities, recruitment_roles)
       VALUES (
         'Chakravyuha Technical Club', '⚡', 'Technical',
-        'The premier technical student organization at Amrita Amaravati. We empower freshers to dive deep into Web3, AI, Cyber Security, App Development, and Competitive Programming through rigorous bootcamps, workshops, and our signature annual hackathon.',
+        'The premier technical student organization at Amrita Amaravati. We empower freshers to dive deep into Web3, AI, Cyber Security, App Development, and Competitive Programming through bootcamps, workshops, and our signature annual hackathon.',
         'Chakravyuha is not just a club, it is the center of engineering culture on campus. Founded with the mission to bridge the gap between classroom theory and industry-grade engineering, we conduct weekly coding sprints, mentor student startups, and host expert talks from alumni at FAANG and top research labs.',
         142, 'Applications open in August 2026. Consists of a basic coding screening, followed by a task round and a friendly senior panel interview. High passion wins over pre-existing coding skills!',
-        '["Hackathon 2025", "Linux Installfest", "AI Workshop"]'
+        '["Hackathon 2025", "Linux Installfest", "AI Workshop"]',
+        ARRAY['GPU Cluster Rig', 'IoT Prototyping Lab', 'VR Headsets'],
+        ARRAY['Full Stack Engineer', 'AI/ML Researcher', 'Smart Contract Auditor']
+      ) RETURNING id
+    `);
+
+    const drishyaRes = await query(`
+      INSERT INTO clubs (name, logo, category, description, detailed_desc, members_count, recruitment_info, gallery_json, club_amenities, recruitment_roles)
+      VALUES (
+        'Team Drishya // Right Side Vision', '🎬', 'Creative',
+        'Multimedia and film production powerhouse. We handle cinematography, photography, creative editing, scriptwriting, and direct campus trailer launches.',
+        'Team Drishya is a group of visual storytellers, editing masters, and sound designers. We organize cinema workshops, short film set runs, and are the official eyes of all cultural and technical fests at Amrita.',
+        48, 'Recruitment tasks open in August 2026. Submit a portfolio of 3 edits, photos, or scripts to get shortlisted for the jury panel.',
+        '["Trailer Launch", "Focal Lengths 101", "Short Film Set"]',
+        ARRAY['Sony FX3 Cinema Rig', 'DJI Ronin Gimbal', 'Davinci Resolve Studio Suite'],
+        ARRAY['Director of Photography', 'Audio Manipulator', 'Colorist', 'Scriptwriter']
       ) RETURNING id
     `);
 
     const naadamRes = await query(`
-      INSERT INTO clubs (name, logo, category, description, detailed_desc, members_count, recruitment_info, gallery_json)
+      INSERT INTO clubs (name, logo, category, description, detailed_desc, members_count, recruitment_info, gallery_json, club_amenities, recruitment_roles)
       VALUES (
         'Naadam Cultural Club', '🎨', 'Cultural',
         'The heartbeat of music, dance, fine arts, and theater at Amrita. We organize college fests, cultural nights, and national-level competition delegations.',
         'Naadam brings together artists of all varieties under one roof. Whether you play the mridangam, bass guitar, perform classical Bharatanatyam, street hip-hop, or sketch digital art, Naadam has a subgroup for you to shine.',
         95, 'Auditions open during the third week of August 2026. Prepare a 2-minute performance representing your art form.',
-        '["Gokulashtami Night", "Aarambh Fest", "Art Exhibition"]'
+        '["Gokulashtami Night", "Aarambh Fest", "Art Exhibition"]',
+        ARRAY['Yamaha Stage Piano', 'Shure SM58 Microphones', 'Line 6 Guitar Processors'],
+        ARRAY['Classical Vocalist', 'Bass Guitarist', 'Digital Illustrator']
+      ) RETURNING id
+    `);
+
+    const avisrutaRes = await query(`
+      INSERT INTO clubs (name, logo, category, description, detailed_desc, members_count, recruitment_info, gallery_json, club_amenities, recruitment_roles)
+      VALUES (
+        'Avisruta Sports Club', '🏆', 'Sports',
+        'Leading all athletic schedules, varsity teams, gym routines, and campus-wide league tournaments across Amrita.',
+        'Avisruta keeps the campus fit and competitive. We manage the sports arena, run official practices for football, basketball, and volleyball, and orchestrate the annual Inter-Block Olympics.',
+        110, 'Roster trials held on main arena ground in August 2026. Consists of a fitness drill, skill showcase, and match scrimmages.',
+        '["Inter-Block Soccer", "Basketball Finals", "Avisruta Arena Launch"]',
+        ARRAY['Basketball Courts', 'Volleyball Courts', 'Campus Soccer Grounds', 'Pro Volleyball Nets'],
+        ARRAY['Point Guard', 'Striker', 'Volleyball Setter']
       ) RETURNING id
     `);
 
     const chakId = chakRes.rows[0].id;
+    const drishyaId = drishyaRes.rows[0].id;
     const naadamId = naadamRes.rows[0].id;
+    const avisrutaId = avisrutaRes.rows[0].id;
 
     await query(
       `INSERT INTO coordinators (club_id, name, role, year, contact, linkedin, insta) VALUES 
@@ -847,6 +1037,27 @@ async function seedTables() {
        ($1, 'Vikram Sen', 'Cultural Secretary', '4th Year B.Tech ECE', 'vikram.sen@am.students.edu', '#', '#')`,
       [naadamId]
     );
+
+    await query(
+      `INSERT INTO coordinators (club_id, name, role, year, contact, linkedin, insta) VALUES 
+       ($1, 'Akash Kumar', 'Media Head', '3rd Year B.Tech ECE', 'akash.kumar@am.students.edu', '#', '#')`,
+      [drishyaId]
+    );
+
+    await query(
+      `INSERT INTO coordinators (club_id, name, role, year, contact, linkedin, insta) VALUES 
+       ($1, 'Karthik Rao', 'Sports Captain', '4th Year B.Tech ME', 'karthik.rao@am.students.edu', '#', '#')`,
+      [avisrutaId]
+    );
+
+    await query(`
+      INSERT INTO club_activities (club_id, activity_title, activity_type, scheduled_time, venue_location, slots_available)
+      VALUES 
+      ('drsya-media', 'Cinematic Trailer Shoot (Finding My Pace)', 'Film Set', NOW() + INTERVAL '1 day', 'Academic Block B Horizon Lawn', 15),
+      ('naadam-arts', 'Aarambh Induction Jam Session', 'Acoustic Jam', NOW() + INTERVAL '2 days', 'Main Auditorium Common Stage', 25),
+      ('avisruta-athletics', 'Inter-Block Football Practice Run', 'Match Scrimmage', NOW() + INTERVAL '3 days', 'Campus Soccer Grounds', 18),
+      ('chakravyuha', 'Annual Chakravyuha Hackfest Briefing', 'Hackathon Info Session', NOW() + INTERVAL '4 days', 'Academic Block B Seminar Hall', 40)
+    `);
   }
 
   // Seed Resources
