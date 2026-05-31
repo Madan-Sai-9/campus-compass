@@ -35,6 +35,7 @@ export default function App() {
   
   // Modals & Panels Toggles
   const [showQuizModal, setShowQuizModal] = useState(false);
+  const [isActivityModalOpen, setIsActivityModalOpen] = useState(false);
   const [showAskQModal, setShowAskQModal] = useState(false);
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [isLoginView, setIsLoginView] = useState(true);
@@ -1092,27 +1093,40 @@ export default function App() {
                     <p className="text-xs text-text-secondary mt-0.5">Explore creative sets, acoustic sessions, and athletic rosters live across Amrita Amaravati.</p>
                   </div>
 
-                  {/* Tab Filters for Focus Areas */}
-                  <div className="flex gap-2 flex-wrap">
-                    {[
-                      { id: 'All', label: 'All Life' },
-                      { id: 'Creative', label: 'Media Production' },
-                      { id: 'Cultural', label: 'Cultural Arts' },
-                      { id: 'Sports', label: 'Athletics' },
-                      { id: 'Technical', label: 'Technical' }
-                    ].map(tab => (
+                  {/* Filter Tab Array & Restricted Conditional Action Trigger */}
+                  <div className="flex items-center gap-3 flex-wrap">
+                    <div className="flex gap-1.5 bg-bg-secondary p-1 rounded-xl border border-border-color">
+                      {[
+                        { id: 'All', label: 'All Life' },
+                        { id: 'Creative', label: 'Media Production' },
+                        { id: 'Cultural', label: 'Cultural Arts' },
+                        { id: 'Sports', label: 'Athletics' },
+                        { id: 'Technical', label: 'Technical' }
+                      ].map(tab => (
+                        <button
+                          key={tab.id}
+                          onClick={() => setClubCategoryFilter(tab.id)}
+                          className={`px-3 py-1 text-xs font-semibold rounded-lg transition-all duration-200 ${
+                            clubCategoryFilter === tab.id
+                              ? 'bg-bg-card text-accent-primary shadow-sm font-bold border border-border-color'
+                              : 'text-text-secondary hover:text-text-primary'
+                          }`}
+                        >
+                          {tab.label}
+                        </button>
+                      ))}
+                    </div>
+
+                    {/* THE UI FIX: Dynamic Restricted Button Injection */}
+                    {user && ['coordinator', 'senior', 'admin'].includes(user.role) && (
                       <button
-                        key={tab.id}
-                        onClick={() => setClubCategoryFilter(tab.id)}
-                        className={`px-3 py-1.5 text-xs font-semibold rounded-full border transition-all ${
-                          clubCategoryFilter === tab.id
-                            ? 'bg-accent-primary text-white border-accent-primary shadow-glow'
-                            : 'bg-bg-card text-text-secondary border-border-color hover:text-text-primary hover:bg-bg-elevated'
-                        }`}
+                        onClick={() => setIsActivityModalOpen(true)}
+                        className="btn btn-primary text-xs !py-1.5 !px-3.5 flex items-center gap-1.5 shadow-glow"
                       >
-                        {tab.label}
+                        <Plus className="w-3.5 h-3.5" />
+                        <span>Add Activity</span>
                       </button>
-                    ))}
+                    )}
                   </div>
                 </div>
 
@@ -1842,6 +1856,16 @@ export default function App() {
           </motion.div>
         )}
 
+        {/* 2.5 CLUB ACTIVITY CREATION MODAL */}
+        {isActivityModalOpen && (
+          <CreationModalForm 
+            onClose={() => setIsActivityModalOpen(false)} 
+            user={user}
+            token={token}
+            fetchClubs={fetchClubs}
+          />
+        )}
+
         {/* 3. CLUB FINDER QUIZ MODAL */}
         {showQuizModal && (
           <motion.div 
@@ -2122,6 +2146,147 @@ export default function App() {
 
       </AnimatePresence>
 
+    </div>
+  );
+}
+
+// PREMIUM MINIMALIST MODAL POPUP COMPONENT (STAFF USE ONLY)
+function CreationModalForm({ onClose, user, token, fetchClubs }) {
+  const [title, setTitle] = useState('');
+  const [venue, setVenue] = useState('');
+  const [type, setType] = useState('Film Set');
+  const [time, setTime] = useState('');
+  const [slots, setSlots] = useState(20);
+  const [submitting, setSubmitting] = useState(false);
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    if (!title || !venue || !time) {
+      alert('Please fill out all fields.');
+      return;
+    }
+    setSubmitting(true);
+
+    // Determine managed club context
+    let clubContext = 'chakravyuha';
+    if (user && user.joined_clubs && user.joined_clubs.length > 0) {
+      const c = user.joined_clubs[0];
+      if (c.includes('Drishya')) clubContext = 'drsya-media';
+      else if (c.includes('Naadam')) clubContext = 'naadam-arts';
+      else if (c.includes('Avisruta')) clubContext = 'avisruta-athletics';
+    }
+
+    fetch('http://localhost:5000/api/clubs/activities', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify({
+        club_id: clubContext,
+        activity_title: title,
+        activity_type: type,
+        scheduled_time: time,
+        venue_location: venue,
+        slots_available: parseInt(slots)
+      })
+    })
+      .then(res => res.json())
+      .then(data => {
+        setSubmitting(false);
+        if (data.error) {
+          alert(`Error: ${data.error}`);
+        } else {
+          alert('Success! Session event committed live.');
+          fetchClubs();
+          onClose();
+        }
+      })
+      .catch(err => {
+        setSubmitting(false);
+        console.error('Failed to commit live activity:', err);
+        alert('Server connection error. Failed to commit session.');
+      });
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-[1000] flex items-center justify-center p-4">
+      <div className="bg-bg-card border border-border-color w-full max-w-md rounded-2xl overflow-hidden shadow-2xl p-6 relative animate-fadeIn">
+        <button className="absolute top-4 right-4 p-1.5 bg-bg-elevated border border-border-color rounded-full hover:text-danger transition-colors cursor-pointer" onClick={onClose}>
+          <X className="w-4 h-4" />
+        </button>
+
+        <h3 className="text-lg font-bold font-display text-text-primary mb-1">Broadcast New Club Action</h3>
+        <p className="text-xs text-text-secondary mb-4">This session will route straight to the live operational data layer.</p>
+        
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <label className="text-[10px] uppercase font-bold text-text-muted block mb-1">Session Event Title</label>
+            <input 
+              type="text" 
+              required
+              value={title} 
+              onChange={(e) => setTitle(e.target.value)}
+              placeholder="e.g., Short Film Cinematography Set" 
+              className="w-full px-3.5 py-2 text-xs bg-bg-secondary border border-border-color rounded-lg text-text-primary outline-none focus:border-accent-primary" 
+            />
+          </div>
+          <div>
+            <label className="text-[10px] uppercase font-bold text-text-muted block mb-1">Activity Type / Category</label>
+            <select
+              value={type}
+              onChange={(e) => setType(e.target.value)}
+              className="w-full px-3.5 py-2 text-xs bg-bg-secondary border border-border-color rounded-lg text-text-primary outline-none focus:border-accent-primary"
+            >
+              <option value="Film Set">🎬 Film Set (Creative)</option>
+              <option value="Acoustic Jam">🎵 Acoustic Jam (Cultural)</option>
+              <option value="Match Scrimmage">⚽ Match Scrimmage (Sports)</option>
+              <option value="Hackathon Info Session">💻 Hackathon Session (Technical)</option>
+            </select>
+          </div>
+          <div>
+            <label className="text-[10px] uppercase font-bold text-text-muted block mb-1">Geographic Asset Location</label>
+            <input 
+              type="text" 
+              required
+              value={venue}
+              onChange={(e) => setVenue(e.target.value)}
+              placeholder="e.g., Academic Block B Horizon Lawn" 
+              className="w-full px-3.5 py-2 text-xs bg-bg-secondary border border-border-color rounded-lg text-text-primary outline-none focus:border-accent-primary" 
+            />
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="text-[10px] uppercase font-bold text-text-muted block mb-1">Scheduled Time Parameters</label>
+              <input 
+                type="text" 
+                required
+                value={time}
+                onChange={(e) => setTime(e.target.value)}
+                placeholder="e.g., 4:30 PM Today" 
+                className="w-full px-3.5 py-2 text-xs bg-bg-secondary border border-border-color rounded-lg text-text-primary outline-none focus:border-accent-primary" 
+              />
+            </div>
+            <div>
+              <label className="text-[10px] uppercase font-bold text-text-muted block mb-1">Slots Limit</label>
+              <input 
+                type="number" 
+                required
+                value={slots}
+                onChange={(e) => setSlots(e.target.value)}
+                placeholder="20" 
+                className="w-full px-3.5 py-2 text-xs bg-bg-secondary border border-border-color rounded-lg text-text-primary outline-none focus:border-accent-primary" 
+              />
+            </div>
+          </div>
+          <div className="flex gap-4 pt-2">
+            <button type="button" onClick={onClose} className="btn btn-secondary flex-1 text-xs py-2">Cancel</button>
+            <button type="submit" disabled={submitting} className="btn btn-primary flex-1 text-xs py-2 shadow-glow">
+              {submitting ? 'Committing...' : 'Commit Live'}
+            </button>
+          </div>
+        </form>
+      </div>
     </div>
   );
 }

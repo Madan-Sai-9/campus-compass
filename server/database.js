@@ -400,7 +400,7 @@ class SmartDBPool {
 
     // --- INSERT OPERATORS ---
     
-    // 18. INSERT INTO users (email, password_hash, name, branch, semester) VALUES ($1, $2, $3, $4, $5) RETURNING id
+    // 18. INSERT INTO users (email, password_hash, name, branch, semester, role) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id
     if (normalizedText.startsWith('INSERT INTO users') && normalizedText.includes('RETURNING id')) {
       const newUser = {
         id: db.users.length + 1,
@@ -413,6 +413,8 @@ class SmartDBPool {
         avatar: null,
         achievements_json: '[]',
         joined_clubs_json: '["Chakravyuha Technical Club"]',
+        joined_activities_json: '[]',
+        role: params[5] || (params[0].includes('coordinator') || params[2]?.toLowerCase().includes('coordinator') ? 'coordinator' : 'fresher'),
         created_at: new Date().toISOString()
       };
       db.users.push(newUser);
@@ -433,6 +435,8 @@ class SmartDBPool {
         avatar: null,
         achievements_json: '[]',
         joined_clubs_json: '["Chakravyuha Technical Club"]',
+        joined_activities_json: '[]',
+        role: params[5] || (params[0].includes('coordinator') || params[2]?.toLowerCase().includes('coordinator') ? 'coordinator' : 'fresher'),
         created_at: new Date().toISOString()
       };
       db.users.push(newUser);
@@ -505,6 +509,22 @@ class SmartDBPool {
       db.questions.push(newQ);
       this.writeDb(db);
       return { rows: [newQ], rowCount: 1 };
+    }
+
+    // 24b. INSERT INTO club_activities (club_id, activity_title, activity_type, scheduled_time, venue_location, slots_available) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *
+    if (normalizedText.startsWith('INSERT INTO club_activities') && normalizedText.includes('RETURNING *')) {
+      const newAct = {
+        id: db.club_activities.length + 1,
+        club_id: params[0],
+        activity_title: params[1],
+        activity_type: params[2],
+        scheduled_time: params[3],
+        venue_location: params[4],
+        slots_available: parseInt(params[5] || 20)
+      };
+      db.club_activities.push(newAct);
+      this.writeDb(db);
+      return { rows: [newAct], rowCount: 1 };
     }
 
     // 24. INSERT INTO answers (question_id, author_id, author_name, author_role, author_avatar, body) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *

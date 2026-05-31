@@ -19,6 +19,7 @@ import { z } from 'zod';
 
 import { query, pool, initializeDatabase } from './database.js';
 import mapRouter from './routes/map.js';
+import { requireStaffPrivileges } from './middleware/roles.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -411,6 +412,28 @@ app.post('/api/clubs/activities/register', authenticateToken, async (req, res) =
   } catch (err) {
     console.error('Activity registration error:', err);
     res.status(500).json({ error: 'Activity registration failed.' });
+  }
+});
+
+// POST /api/clubs/activities - Restricted explicitly to coordinators/seniors/admins
+app.post('/api/clubs/activities', authenticateToken, requireStaffPrivileges(['coordinator', 'senior', 'admin']), async (req, res) => {
+  try {
+    const { club_id, activity_title, activity_type, scheduled_time, venue_location, slots_available } = req.body;
+    
+    if (!club_id || !activity_title || !activity_type || !scheduled_time || !venue_location) {
+      return res.status(400).json({ error: 'Validation failed: Missing required activity parameters.' });
+    }
+
+    const result = await query(
+      `INSERT INTO club_activities (club_id, activity_title, activity_type, scheduled_time, venue_location, slots_available)
+       VALUES ($1, $2, $3, $4, $5, $6) RETURNING *`,
+      [club_id, activity_title, activity_type, scheduled_time, venue_location, slots_available || 20]
+    );
+    
+    res.json(result.rows[0]);
+  } catch (err) {
+    console.error('Create activity failure:', err);
+    res.status(500).json({ error: 'Create activity failed.' });
   }
 });
 
