@@ -1,0 +1,253 @@
+{
+  "map_locations": [
+    {
+      "id": "acad_a",
+      "name": "Academic Block A",
+      "description": "Main academic building housing engineering classrooms, basic science physics/chemistry labs, and centralized administration offices.",
+      "asset_category": "academic",
+      "floors_count": 4,
+      "accessibility_verified": true,
+      "campus_wifi_ssid": "Amrita_Guest_5G",
+      "center_x": 250,
+      "center_y": 180,
+      "walking_time_from_hostel": 240
+    },
+    {
+      "id": "acad_b",
+      "name": "Academic Block B",
+      "description": "Engineering & Advanced Computing Hub. Houses core CSE/ECE system processing computer labs, cybersecurity wings, and faculty research cabins.",
+      "asset_category": "academic",
+      "floors_count": 5,
+      "accessibility_verified": true,
+      "campus_wifi_ssid": "Amrita_Academic_WiFi",
+      "center_x": 380,
+      "center_y": 150,
+      "walking_time_from_hostel": 180
+    },
+    {
+      "id": "hostel_boys",
+      "name": "Boys Hostel Block",
+      "description": "Residential block for male engineering students. Equipped with indoor gym spaces, internal laundry setups, and digital common rooms.",
+      "asset_category": "hostel",
+      "floors_count": 8,
+      "accessibility_verified": true,
+      "campus_wifi_ssid": "Amrita_Hostel_Net",
+      "center_x": 180,
+      "center_y": 350,
+      "walking_time_from_hostel": 0
+    },
+    {
+      "id": "hostel_girls",
+      "name": "Girls Hostel Block",
+      "description": "Highly secure residential complex for female students containing study common halls, multi-purpose recreational spaces, and security counters.",
+      "asset_category": "hostel",
+      "floors_count": 8,
+      "accessibility_verified": true,
+      "campus_wifi_ssid": "Amrita_Hostel_Net",
+      "center_x": 500,
+      "center_y": 320,
+      "walking_time_from_hostel": 0
+    },
+    {
+      "id": "mess",
+      "name": "Central Mess Complex",
+      "description": "Grand multi-tiered dining hall processing vegetarian culinary routines daily for hostellers across distinct student wings.",
+      "asset_category": "mess",
+      "floors_count": 2,
+      "accessibility_verified": true,
+      "campus_wifi_ssid": "No public WiFi",
+      "center_x": 340,
+      "center_y": 300,
+      "walking_time_from_hostel": 120
+    },
+    {
+      "id": "sports",
+      "name": "Avisruta Sports Arena",
+      "description": "Expansive outdoor layout tracking basketball courts, volleyball segments, and a massive playground infrastructure for football and cricket.",
+      "asset_category": "sports",
+      "floors_count": 1,
+      "accessibility_verified": true,
+      "campus_wifi_ssid": "Amrita_Sports_WiFi",
+      "center_x": 620,
+      "center_y": 220,
+      "walking_time_from_hostel": 240
+    },
+    {
+      "id": "gate",
+      "name": "Main Security Gate",
+      "description": "Primary perimeter entry check-point. Rigorous structural verification matrix enforced via student identity smart cards 24/7.",
+      "asset_category": "utility",
+      "floors_count": 1,
+      "accessibility_verified": true,
+      "campus_wifi_ssid": "Amrita_Security_Secured",
+      "center_x": 80,
+      "center_y": 250,
+      "walking_time_from_hostel": 720
+    }
+  ],
+  "users": [],
+  "clubs": [
+    {
+      "id": 1,
+      "name": "Chakravyuha Technical Club",
+      "logo": "⚡",
+      "category": "Technical",
+      "description": "The premier technical student organization at Amrita Amaravati. We empower freshers to dive deep into Web3, AI, Cyber Security, App Development, and Competitive Programming through rigorous bootcamps, workshops, and our signature annual hackathon.",
+      "detailed_desc": "Chakravyuha is not just a club, it is the center of engineering culture on campus. Founded with the mission to bridge the gap between classroom theory and industry-grade engineering, we conduct weekly coding sprints, mentor student startups, and host expert talks from alumni at FAANG and top research labs.",
+      "members_count": 142,
+      "recruitment_info": "Applications open in August 2026. Consists of a basic coding screening, followed by a task round and a friendly senior panel interview. High passion wins over pre-existing coding skills!",
+      "gallery_json": "[\"Hackathon 2025\", \"Linux Installfest\", \"AI Workshop\"]"
+    },
+    {
+      "id": 2,
+      "name": "Naadam Cultural Club",
+      "logo": "🎨",
+      "category": "Cultural",
+      "description": "The heartbeat of music, dance, fine arts, and theater at Amrita. We organize college fests, cultural nights, and national-level competition delegations.",
+      "detailed_desc": "Naadam brings together artists of all varieties under one roof. Whether you play the mridangam, bass guitar, perform classical Bharatanatyam, street hip-hop, or sketch digital art, Naadam has a subgroup for you to shine.",
+      "members_count": 95,
+      "recruitment_info": "Auditions open during the third week of August 2026. Prepare a 2-minute performance representing your art form.",
+      "gallery_json": "[\"Gokulashtami Night\", \"Aarambh Fest\", \"Art Exhibition\"]"
+    }
+  ],
+  "coordinators": [
+    {
+      "id": 1,
+      "club_id": 1,
+      "name": "Rohan Sharma",
+      "role": "President",
+      "year": "3rd Year B.Tech CSE",
+      "contact": "rohan.sharma@am.students.edu",
+      "linkedin": "#",
+      "insta": "#"
+    },
+    {
+      "id": 2,
+      "club_id": 1,
+      "name": "Sneha Reddy",
+      "role": "Technical Lead",
+      "year": "3rd Year B.Tech CSE (AI)",
+      "contact": "sneha.reddy@am.students.edu",
+      "linkedin": "#",
+      "insta": "#"
+    },
+    {
+      "id": 3,
+      "club_id": 2,
+      "name": "Vikram Sen",
+      "role": "Cultural Secretary",
+      "year": "4th Year B.Tech ECE",
+      "contact": "vikram.sen@am.students.edu",
+      "linkedin": "#",
+      "insta": "#"
+    }
+  ],
+  "resources": [
+    {
+      "id": 1,
+      "title": "Data Structures Lecture Notes (Complete)",
+      "branch": "CSE",
+      "semester": "Semester 3",
+      "subject": "Data Structures",
+      "type": "Notes",
+      "uploader_name": "Senior Rohan S.",
+      "uploader_avatar": "RS",
+      "downloads": 184,
+      "file_url": "#",
+      "rating": 4.8,
+      "is_verified": true,
+      "created_at": "2026-05-31T08:20:34.260Z"
+    },
+    {
+      "id": 2,
+      "title": "OOP in Java CIA-1 Previous Year Paper (2025)",
+      "branch": "CSE",
+      "semester": "Semester 1",
+      "subject": "OOP in Java",
+      "type": "PYQs",
+      "uploader_name": "Sneha R.",
+      "uploader_avatar": "SR",
+      "downloads": 245,
+      "file_url": "#",
+      "rating": 4.9,
+      "is_verified": true,
+      "created_at": "2026-05-31T08:20:34.262Z"
+    },
+    {
+      "id": 3,
+      "title": "Digital Electronics Lab Manual & Solved Sheets",
+      "branch": "ECE",
+      "semester": "Semester 1",
+      "subject": "Digital Electronics",
+      "type": "Assignments",
+      "uploader_name": "Varun K.",
+      "uploader_avatar": "VK",
+      "downloads": 98,
+      "file_url": "#",
+      "rating": 4.2,
+      "is_verified": true,
+      "created_at": "2026-05-31T08:20:34.262Z"
+    }
+  ],
+  "questions": [
+    {
+      "id": 1,
+      "title": "How strict is the 75% attendance rule in the first semester for lab courses?",
+      "body": "I am a fresher joining B.Tech CSE in July 2026. I live in the hostel and wanted to know what happens if I drop to like 72% attendance in a lab subject due to illness. Do they really condone it or block you from the end sem?",
+      "category": "Academics",
+      "author_id": 99,
+      "author_name": "ExcitedFresher26",
+      "views": 310,
+      "votes": 14,
+      "status": "solved",
+      "created_at": "2026-05-31T08:20:34.262Z"
+    },
+    {
+      "id": 2,
+      "title": "Best resources/IDE to setup before joining CSE AI branches in July?",
+      "body": "I want to utilize the next two months to configure my laptop. What operating system is preferred, and which applications are recommended for our core curriculum in the first semester?",
+      "category": "Must-Have Tools",
+      "author_id": 100,
+      "author_name": "CodeNovice",
+      "views": 185,
+      "votes": 9,
+      "status": "answered",
+      "created_at": "2026-05-31T08:20:34.262Z"
+    }
+  ],
+  "answers": [
+    {
+      "id": 1,
+      "question_id": 1,
+      "author_id": 1,
+      "author_name": "Senior Rohan S.",
+      "author_role": "3rd Year Senior (Chakravyuha)",
+      "author_avatar": "RS",
+      "body": "For lab courses, they are extremely strict. If you miss even a single lab session, you miss the record submission for that week. If you have valid medical certificates, you can submit a condonation letter. The HOD will allow it if it stays above 65%. But do NOT play around with lab attendance; it is much harder to make up compared to lectures.",
+      "votes": 12,
+      "is_accepted": true,
+      "created_at": "2026-05-31T08:20:34.262Z"
+    }
+  ],
+  "comments": [
+    {
+      "id": 1,
+      "answer_id": 1,
+      "author_name": "ExcitedFresher26",
+      "body": "Wow, thanks Rohan! I will make sure to attend every single lab.",
+      "created_at": "2026-05-31T08:20:34.262Z"
+    }
+  ],
+  "votes": [],
+  "notifications": [],
+  "admin_logs": [
+    {
+      "id": 1,
+      "log_type": "system",
+      "action": "Initialize Fallback",
+      "target": "Campus Compass Database",
+      "username": "System",
+      "created_at": "2026-05-31T08:20:34.262Z"
+    }
+  ]
+}

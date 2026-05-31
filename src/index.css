@@ -1,0 +1,183 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* --- Professional Academic SaaS Dark Mode (Default Space Palette) --- */
+    --bg-primary: #06080F;
+    --bg-secondary: #0D111A;
+    --bg-card: #121824;
+    --bg-elevated: #192233;
+    --border-color: rgba(255, 255, 255, 0.06);
+    --border-hover: rgba(255, 255, 255, 0.12);
+    
+    --text-primary: #F3F4F6;
+    --text-secondary: #9CA3AF;
+    --text-muted: #4B5563;
+    
+    --accent-primary: #7C3AED;
+    --accent-glow: rgba(124, 58, 237, 0.15);
+    --accent-secondary: #A3E635;
+    
+    --color-success: #10B981;
+    --color-warning: #F59E0B;
+    --color-danger: #EF4444;
+    
+    --ease-elastic: cubic-bezier(0.25, 1, 0.5, 1);
+    --radius-premium: 14px;
+  }
+
+  [data-theme="light"] {
+    /* --- Pallet Ross Modern Editorial Light Mode --- */
+    --bg-primary: #F6F2EA;
+    --bg-secondary: #FFFFFF;
+    --bg-card: #EFEAE2;
+    --bg-elevated: #E6E0D5;
+    --border-color: rgba(17, 17, 17, 0.06);
+    --border-hover: rgba(17, 17, 17, 0.12);
+    
+    --text-primary: #111111;
+    --text-secondary: #555555;
+    --text-muted: #999999;
+    
+    --accent-primary: #5B21B6;
+    --accent-glow: rgba(91, 33, 182, 0.08);
+    --accent-secondary: #4D7C0F;
+    
+    --color-success: #059669;
+  }
+
+  body {
+    @apply antialiased transition-colors duration-300 overflow-hidden;
+    background-color: var(--bg-primary);
+    color: var(--text-primary);
+    font-family: 'Inter', -apple-system, sans-serif;
+  }
+
+  /* Custom fine-scrollbar */
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  ::-webkit-scrollbar-track {
+    background: var(--bg-primary);
+  }
+  ::-webkit-scrollbar-thumb {
+    background: var(--border-color);
+    border-radius: 100px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: var(--border-hover);
+  }
+}
+
+@layer components {
+  /* --- Clean Fixed Layout Grid Matrix --- */
+  .os-layout-root {
+    display: grid;
+    grid-template-rows: 72px 1fr;
+    height: 100vh;
+    width: 100vw;
+    overflow: hidden;
+  }
+
+  .workspace-body-grid {
+    display: grid;
+    grid-template-columns: 260px 1fr;
+    height: calc(100vh - 72px);
+    overflow: hidden;
+  }
+
+  .sidebar-container {
+    background-color: var(--bg-secondary);
+    border-right: 1px solid var(--border-color);
+    @apply flex flex-col justify-between p-6 h-full overflow-y-auto;
+  }
+
+  /* --- Viewport Canvas Fix (Forces Content Isolation) --- */
+  .canvas-viewport-scroll {
+    @apply h-full overflow-y-auto p-8 lg:p-12 flex flex-col gap-8 pb-24 lg:pb-12;
+    background-color: var(--bg-primary);
+  }
+
+  /* --- Premium Card Surfaces --- */
+  .bento-surface {
+    background-color: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-premium);
+    @apply p-6 transition-all duration-300 backdrop-blur-md;
+    transition-timing-function: var(--ease-elastic);
+  }
+  
+  .bento-surface:hover {
+    border-color: var(--border-hover);
+    transform: translateY(-2px);
+    box-shadow: 0 12px 30px -10px rgba(0, 0, 0, 0.4);
+  }
+
+  /* --- Interactive Inputs --- */
+  .saas-input {
+    background-color: var(--bg-primary);
+    border: 1px solid var(--border-color);
+    color: var(--text-primary);
+    @apply rounded-lg px-4 py-2.5 text-sm transition-all duration-200 outline-none w-full;
+  }
+
+  .saas-input:focus {
+    border-color: var(--accent-primary);
+    box-shadow: 0 0 0 3px var(--accent-glow);
+    background-color: var(--bg-secondary);
+  }
+
+  /* --- Premium Control Buttons --- */
+  .btn-premium {
+    @apply inline-flex items-center justify-center gap-2 px-5 py-2.5 text-sm font-semibold rounded-lg transition-all duration-200 active:scale-95;
+    transition-timing-function: var(--ease-elastic);
+  }
+
+  .btn-premium-primary {
+    background-color: var(--text-primary);
+    color: var(--bg-primary);
+  }
+
+  .btn-premium-primary:hover {
+    @apply shadow-lg filter brightness-95;
+    transform: translateY(-1px);
+  }
+
+  .btn-premium-secondary {
+    background-color: transparent;
+    border: 1px solid var(--border-color);
+    color: var(--text-primary);
+  }
+
+  .btn-premium-secondary:hover {
+    background-color: var(--bg-elevated);
+    border-color: var(--border-hover);
+  }
+}
+
+/* --- Inline SVG Map Routing Glow Patterns --- */
+@keyframes dash-flow {
+  to {
+    stroke-dashoffset: -20;
+  }
+}
+
+.map-route-line {
+  stroke-dasharray: 6, 4;
+  animation: dash-flow 1.2s linear infinite;
+}
+
+/* Custom scrolling ticker animation */
+@keyframes ticker {
+  0% { transform: translate3d(0, 0, 0); }
+  100% { transform: translate3d(-100%, 0, 0); }
+}
+.animate-ticker {
+  display: inline-block;
+  white-space: nowrap;
+  animation: ticker 30s linear infinite;
+  padding-left: 100%;
+}
